@@ -1,5 +1,6 @@
 # bank_system.py
-import json, os
+import json
+import os
 from datetime import datetime
 
 class BankSystem:
@@ -10,7 +11,10 @@ class BankSystem:
     def load_users(self):
         if os.path.exists(self.filename):
             with open(self.filename, 'r') as f:
-                return json.load(f)
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    return {}
         return {}
 
     def save_users(self):
@@ -26,29 +30,38 @@ class BankSystem:
         return name in self.users
 
     def register(self, name, password):
-        self.users[name] = {'password': password, 'balance': 1000, 'history': ["Account created"]}
+        self.users[name] = {
+            'password': password,
+            'balance': 1000,
+            'history': ["Account created"]
+        }
         self.save_users()
 
     def login(self, name, password):
-        return name in self.users and self.users[name]['password'] == password
+        user = self.users.get(name)
+        return user is not None and user['password'] == password
 
     def get_balance(self, name):
-        return self.users[name]['balance']
+        return self.users.get(name, {}).get('balance', 0)
 
     def deposit(self, name, amount):
-        self.users[name]['balance'] += amount
-        self.log_transaction(name, f"Deposited ₹{amount}")
+        if amount > 0:
+            self.users[name]['balance'] += amount
+            self.log_transaction(name, f"Deposited ₹{amount}")
 
     def withdraw(self, name, amount):
-        if self.users[name]['balance'] >= amount:
+        if 0 < amount <= self.users[name]['balance']:
             self.users[name]['balance'] -= amount
             self.log_transaction(name, f"Withdrew ₹{amount}")
             return True
         return False
 
     def transfer(self, sender, recipient, amount):
+        if sender == recipient:
+            return False
         if recipient not in self.users or self.users[sender]['balance'] < amount:
             return False
+
         self.users[sender]['balance'] -= amount
         self.users[recipient]['balance'] += amount
         self.log_transaction(sender, f"Transferred ₹{amount} to {recipient}")
@@ -56,4 +69,4 @@ class BankSystem:
         return True
 
     def get_history(self, name):
-        return self.users[name].get('history', [])
+        return self.users.get(name, {}).get('history', [])
