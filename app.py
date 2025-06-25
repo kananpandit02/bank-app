@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime
 import json
 
-# 👇 Admin credentials
+# Admin credentials
 ADMIN_NAME = "Kanan Pandit"
 ADMIN_PASSWORD = "260300"
 
@@ -21,7 +21,7 @@ if "acc_no" not in st.session_state:
 
 now = datetime.now().strftime("%A, %d %B %Y | %I:%M:%S %p")
 
-# --- Navigation Bar ---
+# Navigation Bar
 nav_links = """
 <a href="#">Home</a>
 <a href="#">Schemes</a>
@@ -33,7 +33,6 @@ if st.session_state.user:
     nav_links += '<a href="#dashboard">Dashboard</a>'
 
 st.markdown(f"""
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
     .nav-bar {{
         background-color: #003566;
@@ -88,7 +87,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- Login/Register Section ---
+# Login/Register Section
 def login_section():
     st.markdown("#### 💡 Login or Register")
     choice = st.radio("Select Option", ["Login", "Register"], horizontal=True)
@@ -131,7 +130,7 @@ def login_section():
                 else:
                     st.error("❌ Invalid credentials")
 
-# --- Dashboard ---
+# Dashboard
 def dashboard():
     st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=80)
     st.sidebar.markdown(f"### 👤 {st.session_state.user}")
@@ -144,71 +143,87 @@ def dashboard():
     menu_options.append("Logout")
 
     menu = st.sidebar.radio("Menu", menu_options)
-
     acc_no = st.session_state.acc_no
     st.markdown('<div id="dashboard"></div>', unsafe_allow_html=True)
 
     if menu == "Dashboard":
         st.title("💼 Account Dashboard")
-        balance = bank.get_balance(acc_no)
-        st.metric("Available Balance", f"₹{balance}")
+        if acc_no in bank.users:
+            balance = bank.get_balance(acc_no)
+            st.metric("Available Balance", f"₹{balance}")
+        else:
+            st.warning("Account not found")
 
     elif menu == "Deposit":
-        st.subheader("Deposit Money")
-        amt = st.number_input("Enter amount", min_value=1)
-        if st.button("Deposit"):
-            bank.deposit(acc_no, amt)
-            st.success(f"✅ Deposited ₹{amt}")
+        if acc_no in bank.users:
+            st.subheader("Deposit Money")
+            amt = st.number_input("Enter amount", min_value=1)
+            if st.button("Deposit"):
+                bank.deposit(acc_no, amt)
+                st.success(f"✅ Deposited ₹{amt}")
+        else:
+            st.warning("Invalid user account")
 
     elif menu == "Withdraw":
-        st.subheader("Withdraw Money")
-        amt = st.number_input("Enter amount", min_value=1)
-        if st.button("Withdraw"):
-            if bank.withdraw(acc_no, amt):
-                st.success(f"✅ Withdrew ₹{amt}")
-            else:
-                st.error("❌ Insufficient balance")
+        if acc_no in bank.users:
+            st.subheader("Withdraw Money")
+            amt = st.number_input("Enter amount", min_value=1)
+            if st.button("Withdraw"):
+                if bank.withdraw(acc_no, amt):
+                    st.success(f"✅ Withdrew ₹{amt}")
+                else:
+                    st.error("❌ Insufficient balance")
+        else:
+            st.warning("Invalid user account")
 
     elif menu == "Transfer":
-        st.subheader("Transfer Money")
-        recipient = st.text_input("Recipient Username")
-        amt = st.number_input("Enter amount", min_value=1)
-        if st.button("Transfer"):
-            if recipient == st.session_state.user:
-                st.warning("You cannot transfer to yourself")
-            elif bank.transfer(acc_no, recipient, amt):
-                st.success(f"✅ Transferred ₹{amt} to {recipient}")
-            else:
-                st.error("Transfer failed")
+        if acc_no in bank.users:
+            st.subheader("Transfer Money")
+            recipient = st.text_input("Recipient Username")
+            amt = st.number_input("Enter amount", min_value=1)
+            if st.button("Transfer"):
+                if recipient == st.session_state.user:
+                    st.warning("You cannot transfer to yourself")
+                elif bank.transfer(acc_no, recipient, amt):
+                    st.success(f"✅ Transferred ₹{amt} to {recipient}")
+                else:
+                    st.error("Transfer failed")
+        else:
+            st.warning("Invalid user account")
 
     elif menu == "History":
         st.subheader("Transaction History")
-        history = bank.get_history(acc_no)
-        if history:
-            for h in reversed(history[-10:]):
-                st.info(h)
+        if acc_no in bank.users:
+            history = bank.get_history(acc_no)
+            if history:
+                for h in reversed(history[-10:]):
+                    st.info(h)
+            else:
+                st.write("No transaction history yet")
         else:
-            st.write("No transaction history yet")
+            st.warning("No transaction history found")
 
     elif menu == "Analytics":
-        st.subheader("Transaction Analytics")
-        history = bank.get_history(acc_no)
-        if not history:
-            st.info("No data")
+        st.subheader("📊 Transaction Analytics")
+        if acc_no in bank.users:
+            history = bank.get_history(acc_no)
+            if not history:
+                st.info("No data")
+            else:
+                txn_type = {"Deposit": 0, "Withdraw": 0, "Transfer": 0}
+                for h in history:
+                    for key in txn_type:
+                        if key.lower() in h.lower():
+                            txn_type[key] += 1
+                df = pd.DataFrame({"Transaction": txn_type.keys(), "Count": txn_type.values()})
+                fig = px.pie(df, names="Transaction", values="Count", title="Your Transactions")
+                st.plotly_chart(fig)
         else:
-            txn_type = {"Deposit": 0, "Withdraw": 0, "Transfer": 0}
-            for h in history:
-                for key in txn_type:
-                    if key.lower() in h.lower():
-                        txn_type[key] += 1
-            df = pd.DataFrame({"Transaction": txn_type.keys(), "Count": txn_type.values()})
-            fig = px.pie(df, names="Transaction", values="Count", title="Your Transactions")
-            st.plotly_chart(fig)
+            st.warning("User account not found.")
 
     elif menu == "Admin Panel" and is_admin:
         st.title("🛠️ Admin Panel")
         st.subheader("📂 View & Edit All Users")
-
         try:
             with open("bank_data.json", "r") as f:
                 data = json.load(f)
@@ -218,7 +233,6 @@ def dashboard():
 
             if selected_user:
                 st.json(data[selected_user])
-
                 st.write("### ✏️ Edit Details")
                 new_name = st.text_input("Name", data[selected_user]["name"])
                 new_pass = st.text_input("Password", data[selected_user]["password"])
@@ -253,7 +267,7 @@ if st.session_state.user:
 else:
     login_section()
 
-# --- Footer ---
+# Footer
 st.markdown("""
 <div class="footer" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 14px; color: #333;">
     <strong>Developed & Maintained by <span style="color:#003566;">Kanan Pandit</span></strong> — <strong><span style="color:black;">Aspiring Data Scientist</span></strong><br>
