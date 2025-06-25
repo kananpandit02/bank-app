@@ -66,6 +66,7 @@ st.markdown(f"""
     <a href="#">Deposits</a>
     <a href="#">Netbanking</a>
     <a href="#">FAQ</a>
+    {'<a href="#dashboard">Dashboard</a>' if st.session_state.user else ''}
   </div>
   <div>🕒 {now}</div>
 </div>
@@ -114,6 +115,8 @@ def dashboard():
     menu = st.sidebar.radio("Menu", ["Dashboard", "Deposit", "Withdraw", "Transfer", "History", "Analytics", "Logout"])
 
     acc_no = st.session_state.acc_no
+
+    st.markdown('<div id="dashboard"></div>', unsafe_allow_html=True)
 
     if menu == "Dashboard":
         st.title("💼 Account Dashboard")
