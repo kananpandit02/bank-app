@@ -77,6 +77,11 @@ st.markdown(f"""
 <div class="quote-banner">
     “The ultimate goal of banking is not just saving money, but empowering lives and communities.”
 </div>
+
+<div class="quote-banner">
+    🎉 Welcome to <strong>Golar Gramin Bank</strong>, <strong>{st.session_state.user}</strong>! <br>
+    Empowering your financial journey with <b>trust</b> and <b>care</b> 💰🏦
+</div>
 """, unsafe_allow_html=True)
 
 # --- Login / Register / Forgot Password ---
@@ -121,7 +126,7 @@ def login_section():
                 if acc:
                     st.session_state.user = bank.users[acc]["name"]
                     st.session_state.acc_no = acc
-                    st.success(f"🎉 Welcome to Golar Gramin Bank, {st.session_state.user}! Empowering your financial journey with trust and care 💰🏦")
+                    st.success(f"🎉 Welcome to Golar Gramin Bank, {st.session_state.user}!")
                     time.sleep(1)
                     st.rerun()
                 else:
