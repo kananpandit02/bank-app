@@ -1,15 +1,14 @@
 import streamlit as st
 from bank_system import BankSystem
-from PIL import Image
+from datetime import datetime
+import json
 import time
 import plotly.express as px
 import pandas as pd
-from datetime import datetime
-import json
 
-# Admin credentials
 ADMIN_NAME = "Kanan Pandit"
 ADMIN_PASSWORD = "260300"
+ADMIN_CONTACT = "📧 kananpandit02@gmail.com | 📱 +91-XXXXXXXXXX"
 
 st.set_page_config(page_title="Golar Gramin Bank", layout="wide", page_icon="🏦")
 bank = BankSystem()
@@ -21,7 +20,7 @@ if "acc_no" not in st.session_state:
 
 now = datetime.now().strftime("%A, %d %B %Y | %I:%M:%S %p")
 
-# Navigation Bar
+# Navbar
 nav_links = """
 <a href="#">Home</a>
 <a href="#">Schemes</a>
@@ -33,90 +32,57 @@ if st.session_state.user:
     nav_links += '<a href="#dashboard">Dashboard</a>'
 
 st.markdown(f"""
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-    .nav-bar {{
-        background-color: #003566;
-        padding: 10px 20px;
-        color: white;
-        font-size: 18px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }}
-    .nav-links a {{
-        color: white;
-        text-decoration: none;
-        margin: 0 10px;
-    }}
-    .nav-links a:hover {{
-        color: #ffd60a;
-    }}
-    .quote-banner {{
-        background-color: #ffd60a;
-        color: #003566;
-        font-weight: 500;
-        font-size: 20px;
-        padding: 15px;
-        text-align: center;
-        margin: 10px 0;
-        border-radius: 12px;
-    }}
-    .footer {{
-        margin-top: 20px;
-        font-size: 14px;
-        color: #888;
-        text-align: center;
-    }}
-    .stButton > button {{
-        border-radius: 10px;
-        font-size: 16px;
-        background-color: #003566;
-        color: white;
-        padding: 8px 16px;
-    }}
+.nav-bar {{
+    background-color: #003566;
+    padding: 10px 20px;
+    color: white;
+    font-size: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}}
+.nav-links a {{
+    color: white;
+    text-decoration: none;
+    margin: 0 10px;
+}}
+.nav-links a:hover {{
+    color: #ffd60a;
+}}
+.quote-banner {{
+    background-color: #ffd60a;
+    color: #003566;
+    font-weight: 500;
+    font-size: 20px;
+    padding: 15px;
+    text-align: center;
+    margin: 10px 0;
+    border-radius: 12px;
+}}
 </style>
 <div class="nav-bar">
-  <div><strong>🌐 Golar Gramin Bank</strong></div>
-  <div class="nav-links">
-    {nav_links}
-  </div>
+  <div><strong>🏦 Golar Gramin Bank</strong></div>
+  <div class="nav-links">{nav_links}</div>
   <div>🕒 {now}</div>
 </div>
-<div class="quote-banner">
-    "The ultimate goal of banking is not just saving money, but empowering lives and communities."
-</div>
+<div class="quote-banner">"Empowering lives through digital banking."</div>
 """, unsafe_allow_html=True)
 
 # Login/Register Section
 def login_section():
-    st.markdown("#### 💡 Login or Register")
-    choice = st.radio("Select Option", ["Login", "Register"], horizontal=True)
-    st.write("---")
+    st.markdown("## 👤 Login or Register")
+    tab1, tab2, tab3 = st.tabs(["🔐 User Login", "📝 Register", "🔑 Forgot Password"])
 
-    if choice == "Register":
-        acc_no = st.text_input("🌐 Account Number (10 digits)")
-        name = st.text_input("👤 Full Name")
-        password = st.text_input("🔑 Password", type="password")
-
-        if st.button("Register"):
-            if len(acc_no) != 10 or not acc_no.isdigit():
-                st.error("Account number must be 10 digits.")
-            else:
-                success, msg = bank.register(acc_no, name, password)
-                if success:
-                    st.success(msg)
-                else:
-                    st.error(msg)
-
-    else:
-        identifier = st.text_input("📄 Account No / Username")
-        password = st.text_input("🔑 Password", type="password")
-
+    with tab1:
+        identifier = st.text_input("Account No / Username / Mobile")
+        password = st.text_input("Password (6-digit)", type="password")
         if st.button("Login"):
             if identifier == ADMIN_NAME and password == ADMIN_PASSWORD:
                 st.session_state.user = ADMIN_NAME
                 st.session_state.acc_no = "admin"
-                st.success(f"✅ Welcome Admin!")
+                st.success("✅ Welcome Admin!")
                 time.sleep(1)
                 st.rerun()
             else:
@@ -130,130 +96,108 @@ def login_section():
                 else:
                     st.error("❌ Invalid credentials")
 
+    with tab2:
+        acc_no = st.text_input("Account Number (10 digits)")
+        name = st.text_input("Full Name (will be saved in CAPS)")
+        mobile = st.text_input("Mobile Number")
+        password = st.text_input("Password (6-digit)", type="password")
+        if st.button("Register"):
+            success, msg = bank.register(acc_no, name, password, mobile)
+            st.success(msg) if success else st.error(msg)
+
+    with tab3:
+        query = st.text_input("Enter Registered Mobile or Name (in CAPS)")
+        if st.button("Recover Password"):
+            pw = bank.forgot_password(query)
+            if pw:
+                st.info(f"🔑 Your password is: {pw}")
+            else:
+                st.error("❌ No matching user found")
+
 # Dashboard
 def dashboard():
-    st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=80)
-    st.sidebar.markdown(f"### 👤 {st.session_state.user}")
-
+    st.sidebar.title("🏦 Menu")
+    st.sidebar.markdown(f"**👤 {st.session_state.user}**")
     is_admin = st.session_state.user == ADMIN_NAME
+    menu = st.sidebar.radio("Select", ["Dashboard", "Deposit", "Withdraw", "Transfer", "History", "Analytics", "Logout"] + (["Admin Panel"] if is_admin else []))
 
-    menu_options = ["Dashboard", "Deposit", "Withdraw", "Transfer", "History", "Analytics"]
-    if is_admin:
-        menu_options.append("Admin Panel")
-    menu_options.append("Logout")
-
-    menu = st.sidebar.radio("Menu", menu_options)
     acc_no = st.session_state.acc_no
-    st.markdown('<div id="dashboard"></div>', unsafe_allow_html=True)
 
     if menu == "Dashboard":
         st.title("💼 Account Dashboard")
-        if acc_no in bank.users:
-            balance = bank.get_balance(acc_no)
-            st.metric("Available Balance", f"₹{balance}")
-        else:
-            st.warning("Account not found")
+        st.metric("Available Balance", f"₹{bank.get_balance(acc_no)}")
 
     elif menu == "Deposit":
-        if acc_no in bank.users:
-            st.subheader("Deposit Money")
-            amt = st.number_input("Enter amount", min_value=1)
-            if st.button("Deposit"):
-                bank.deposit(acc_no, amt)
-                st.success(f"✅ Deposited ₹{amt}")
-        else:
-            st.warning("Invalid user account")
+        amt = st.number_input("Enter amount to deposit", min_value=1)
+        if st.button("Deposit"):
+            bank.deposit(acc_no, amt)
+            st.success(f"Deposited ₹{amt}")
 
     elif menu == "Withdraw":
-        if acc_no in bank.users:
-            st.subheader("Withdraw Money")
-            amt = st.number_input("Enter amount", min_value=1)
-            if st.button("Withdraw"):
-                if bank.withdraw(acc_no, amt):
-                    st.success(f"✅ Withdrew ₹{amt}")
-                else:
-                    st.error("❌ Insufficient balance")
-        else:
-            st.warning("Invalid user account")
+        amt = st.number_input("Enter amount to withdraw", min_value=1)
+        if st.button("Withdraw"):
+            if bank.withdraw(acc_no, amt):
+                st.success(f"Withdrew ₹{amt}")
+            else:
+                st.error("Insufficient balance")
 
     elif menu == "Transfer":
-        if acc_no in bank.users:
-            st.subheader("Transfer Money")
-            recipient = st.text_input("Recipient Username")
-            amt = st.number_input("Enter amount", min_value=1)
-            if st.button("Transfer"):
-                if recipient == st.session_state.user:
-                    st.warning("You cannot transfer to yourself")
-                elif bank.transfer(acc_no, recipient, amt):
-                    st.success(f"✅ Transferred ₹{amt} to {recipient}")
-                else:
-                    st.error("Transfer failed")
-        else:
-            st.warning("Invalid user account")
+        to = st.text_input("Recipient (Name or Mobile)")
+        amt = st.number_input("Amount to transfer", min_value=1)
+        if st.button("Transfer"):
+            if to.upper() == st.session_state.user or to == bank.users[acc_no]["mobile"]:
+                st.warning("Cannot transfer to self")
+            elif bank.transfer(acc_no, to, amt):
+                st.success(f"Transferred ₹{amt} to {to}")
+            else:
+                st.error("Transfer failed")
 
     elif menu == "History":
         st.subheader("Transaction History")
-        if acc_no in bank.users:
-            history = bank.get_history(acc_no)
-            if history:
-                for h in reversed(history[-10:]):
-                    st.info(h)
-            else:
-                st.write("No transaction history yet")
-        else:
-            st.warning("No transaction history found")
+        for h in reversed(bank.get_history(acc_no)[-10:]):
+            st.info(h)
 
     elif menu == "Analytics":
-        st.subheader("📊 Transaction Analytics")
-        if acc_no in bank.users:
-            history = bank.get_history(acc_no)
-            if not history:
-                st.info("No data")
-            else:
-                txn_type = {"Deposit": 0, "Withdraw": 0, "Transfer": 0}
-                for h in history:
-                    for key in txn_type:
-                        if key.lower() in h.lower():
-                            txn_type[key] += 1
-                df = pd.DataFrame({"Transaction": txn_type.keys(), "Count": txn_type.values()})
-                fig = px.pie(df, names="Transaction", values="Count", title="Your Transactions")
-                st.plotly_chart(fig)
+        history = bank.get_history(acc_no)
+        if not history:
+            st.warning("No transactions")
         else:
-            st.warning("User account not found.")
+            counts = {"Deposit": 0, "Withdraw": 0, "Transfer": 0}
+            for h in history:
+                for k in counts:
+                    if k.lower() in h.lower():
+                        counts[k] += 1
+            df = pd.DataFrame({"Transaction": counts.keys(), "Count": counts.values()})
+            st.plotly_chart(px.pie(df, names="Transaction", values="Count", title="Transaction Breakdown"))
 
-    elif menu == "Admin Panel" and is_admin:
+    elif menu == "Admin Panel":
         st.title("🛠️ Admin Panel")
-        st.subheader("📂 View & Edit All Users")
+        st.write("🔒 Admin can edit user data below:")
         try:
             with open("bank_data.json", "r") as f:
                 data = json.load(f)
-
             user_ids = list(data.keys())
-            selected_user = st.selectbox("Select a user to view/edit", user_ids)
-
-            if selected_user:
-                st.json(data[selected_user])
-                st.write("### ✏️ Edit Details")
-                new_name = st.text_input("Name", data[selected_user]["name"])
-                new_pass = st.text_input("Password", data[selected_user]["password"])
-                new_bal = st.number_input("Balance", value=data[selected_user]["balance"], min_value=0)
-                new_hist = st.text_area("History (separate by semicolons)", value="; ".join(data[selected_user]["history"]))
-
-                if st.button("💾 Save Changes"):
-                    data[selected_user]["name"] = new_name
-                    data[selected_user]["password"] = new_pass
-                    data[selected_user]["balance"] = new_bal
-                    data[selected_user]["history"] = [i.strip() for i in new_hist.split(";") if i.strip()]
-                    with open("bank_data.json", "w") as f:
-                        json.dump(data, f, indent=4)
-                    st.success("✅ User data updated!")
-                    st.rerun()
-
-                st.download_button("📥 Download JSON", data=json.dumps(data, indent=4),
-                                   file_name="bank_data.json", mime="application/json")
-
-        except FileNotFoundError:
-            st.error("bank_data.json not found.")
+            user_id = st.selectbox("Select user", user_ids)
+            user = data[user_id]
+            new_name = st.text_input("Name", user["name"])
+            new_pass = st.text_input("Password", user["password"])
+            new_mobile = st.text_input("Mobile", user["mobile"])
+            new_bal = st.number_input("Balance", value=user["balance"], min_value=0)
+            new_hist = st.text_area("History (semicolon-separated)", value="; ".join(user["history"]))
+            if st.button("Save"):
+                data[user_id] = {
+                    "name": new_name.upper(),
+                    "password": new_pass,
+                    "mobile": new_mobile,
+                    "balance": new_bal,
+                    "history": [i.strip() for i in new_hist.split(";") if i.strip()]
+                }
+                with open("bank_data.json", "w") as f:
+                    json.dump(data, f, indent=4)
+                st.success("User updated!")
+                st.rerun()
+        except:
+            st.error("Error loading bank_data.json")
 
     elif menu == "Logout":
         st.session_state.user = None
@@ -267,16 +211,11 @@ if st.session_state.user:
 else:
     login_section()
 
-# Footer
-st.markdown("""
-<div class="footer" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 14px; color: #333;">
-    <strong>Developed & Maintained by <span style="color:#003566;">Kanan Pandit</span></strong> — <strong><span style="color:black;">Aspiring Data Scientist</span></strong><br>
-    🎓 <strong>M.Sc. in Big Data Analytics</strong>, RKMVERI, Belur Math<br>
-    📧 <strong><a href="mailto:kananpandit02@gmail.com" target="_blank">kananpandit02@gmail.com</a></strong> |
-    💼 <strong><a href="https://linkedin.com/in/kananpandit02" target="_blank">LinkedIn</a></strong> |
-    🧠 <strong><a href="https://github.com/kananpandit02" target="_blank">GitHub</a></strong> |
-    🌐 <strong><a href="https://kananpanditportfolio.netlify.app/" target="_blank">Portfolio</a></strong>
-    <br><br>
-    <em><strong>"Empowering Digital Banking through Data & Design"</strong></em>
+st.markdown(f"""
+<hr><div style="text-align:center; font-size:14px">
+👨‍💻 Developed by <b>Kanan Pandit</b><br>
+📧 <a href="mailto:kananpandit02@gmail.com">kananpandit02@gmail.com</a><br>
+📞 Admin Help: <b>{ADMIN_CONTACT}</b><br>
+<em>“Empowering Digital Banking through Data & Design”</em>
 </div>
 """, unsafe_allow_html=True)
