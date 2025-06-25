@@ -11,7 +11,7 @@ import plotly.express as px
 ADMIN_NAME = "KANAN PANDIT"
 ADMIN_PASSWORD = "260300"
 
-# --- Session Init ---
+# --- Initialize Session ---
 st.set_page_config(page_title="Golar Gramin Bank", layout="wide", page_icon="🏦")
 bank = BankSystem()
 
@@ -20,7 +20,7 @@ if "user" not in st.session_state:
 if "acc_no" not in st.session_state:
     st.session_state.acc_no = None
 
-# --- Get Indian Date & Time ---
+# --- Current Indian Time ---
 india_time = datetime.now(pytz.timezone("Asia/Kolkata"))
 now = india_time.strftime("%A, %d %B %Y | %I:%M:%S %p")
 
@@ -69,7 +69,6 @@ st.markdown(f"""
     color: #888;
 }}
 </style>
-
 <div class="nav-bar">
     <div><strong>🌐 Golar Gramin Bank</strong></div>
     <div class="nav-links">{nav_links}</div>
@@ -80,7 +79,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- Login/Register Section ---
+# --- Login / Register / Forgot Password ---
 def login_section():
     st.markdown("## 🔐 Login / Register / Forgot Password")
     option = st.radio("Choose an option", ["Login", "Register", "Forgot Password"], horizontal=True)
@@ -107,18 +106,18 @@ def login_section():
             else:
                 st.error("User not found. Please check your input.")
 
-    else:  # Login
+    elif option == "Login":
         idn = st.text_input("🧾 Account No / Name / Mobile")
         pwd = st.text_input("🔑 Password (6-digit)", type="password")
         if st.button("Login"):
-            if idn.upper() == ADMIN_NAME and pwd == ADMIN_PASSWORD:
+            if idn.strip().upper() == ADMIN_NAME and pwd == ADMIN_PASSWORD:
                 st.session_state.user = ADMIN_NAME
                 st.session_state.acc_no = "admin"
                 st.success("✅ Admin Logged in!")
                 time.sleep(1)
                 st.rerun()
             else:
-                acc = bank.login(idn, pwd)
+                acc = bank.login(idn.strip(), pwd)
                 if acc:
                     st.session_state.user = bank.users[acc]["name"]
                     st.session_state.acc_no = acc
@@ -128,7 +127,7 @@ def login_section():
                 else:
                     st.error("❌ Invalid credentials")
 
-# --- Dashboard Section ---
+# --- Dashboard ---
 def dashboard():
     is_admin = st.session_state.user == ADMIN_NAME
     st.sidebar.markdown(f"### 👤 {st.session_state.user}")
@@ -138,7 +137,6 @@ def dashboard():
     )
 
     acc_no = st.session_state.acc_no
-    st.markdown('<div id="dashboard"></div>', unsafe_allow_html=True)
 
     if menu == "Dashboard":
         st.title("💼 Account Dashboard")
@@ -163,7 +161,7 @@ def dashboard():
         to = st.text_input("👤 Recipient Name or Mobile")
         amt = st.number_input("💸 Amount to transfer", min_value=1)
         if st.button("Transfer"):
-            if bank.transfer(acc_no, to, amt):
+            if bank.transfer(acc_no, to.strip(), amt):
                 st.success(f"Transferred ₹{amt} to {to}")
             else:
                 st.error("❌ Transfer failed")
@@ -188,28 +186,31 @@ def dashboard():
         df = pd.DataFrame({"Transaction": txn_type.keys(), "Count": txn_type.values()})
         st.plotly_chart(px.bar(df, x="Transaction", y="Count", title="Your Transactions"))
 
-    elif menu == "Admin Panel":
+    elif menu == "Admin Panel" and is_admin:
         st.title("🛠️ Admin Panel")
-        with open("bank_data.json", "r") as f:
-            data = json.load(f)
-        user_keys = list(data.keys())
-        selected = st.selectbox("Select user", user_keys)
-        if selected:
-            st.json(data[selected])
-            new_name = st.text_input("Edit Name", data[selected]["name"])
-            new_pass = st.text_input("Edit Password", data[selected]["password"])
-            new_bal = st.number_input("Edit Balance", value=data[selected]["balance"])
-            new_hist = st.text_area("Edit History", "; ".join(data[selected]["history"]))
-            if st.button("💾 Save Changes"):
-                data[selected]["name"] = new_name
-                data[selected]["password"] = new_pass
-                data[selected]["balance"] = new_bal
-                data[selected]["history"] = [x.strip() for x in new_hist.split(";")]
-                with open("bank_data.json", "w") as f:
-                    json.dump(data, f, indent=4)
-                st.success("✅ User data updated")
-                st.rerun()
-            st.download_button("⬇️ Download All Data", data=json.dumps(data, indent=4), file_name="bank_data.json")
+        try:
+            with open("bank_data.json", "r") as f:
+                data = json.load(f)
+            user_keys = list(data.keys())
+            selected = st.selectbox("Select user", user_keys)
+            if selected:
+                st.json(data[selected])
+                new_name = st.text_input("Edit Name", data[selected]["name"])
+                new_pass = st.text_input("Edit Password", data[selected]["password"])
+                new_bal = st.number_input("Edit Balance", value=data[selected]["balance"])
+                new_hist = st.text_area("Edit History", "; ".join(data[selected]["history"]))
+                if st.button("💾 Save Changes"):
+                    data[selected]["name"] = new_name.upper()
+                    data[selected]["password"] = new_pass
+                    data[selected]["balance"] = new_bal
+                    data[selected]["history"] = [x.strip() for x in new_hist.split(";") if x.strip()]
+                    with open("bank_data.json", "w") as f:
+                        json.dump(data, f, indent=4)
+                    st.success("✅ User data updated")
+                    st.rerun()
+                st.download_button("⬇️ Download All Data", data=json.dumps(data, indent=4), file_name="bank_data.json")
+        except FileNotFoundError:
+            st.error("❌ bank_data.json not found.")
 
     elif menu == "Logout":
         st.session_state.user = None
@@ -218,7 +219,7 @@ def dashboard():
         time.sleep(1)
         st.rerun()
 
-# --- Main App Routing ---
+# --- Main Routing ---
 if st.session_state.user:
     dashboard()
 else:
@@ -227,7 +228,7 @@ else:
 # --- Footer ---
 st.markdown("""
 <div class="footer">
-    Developed by <strong>Kanan Pandit</strong> | Aspiring Data Scientist  
+    Developed by <strong>Kanan Pandit</strong> | <b>Aspiring Data Scientist</b>  
     <br>📧 kananpandit02@gmail.com | 📞 +91-XXXXXXXXXX  
     <br>💼 <a href="https://linkedin.com/in/kananpandit02" target="_blank">LinkedIn</a> |  
     🌐 <a href="https://kananpanditportfolio.netlify.app" target="_blank">Portfolio</a> |  
