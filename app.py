@@ -148,20 +148,19 @@
 #     login_section()
 
 
-# app.py
 import streamlit as st
 from bank_system import BankSystem
 from PIL import Image
 import time
+import plotly.express as px
+import pandas as pd
 
 st.set_page_config(page_title="Golar Gramin Bank", layout="centered", page_icon="🏦")
 bank = BankSystem()
 
-# Session state
 if "user" not in st.session_state:
     st.session_state.user = None
 
-# Custom CSS for realistic style
 st.markdown("""
     <style>
         body {
@@ -210,7 +209,6 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Login/Register section
 def login_section():
     st.markdown("<h1 class='main-title'>🔐 Welcome to Golar Gramin Bank</h1>", unsafe_allow_html=True)
     st.markdown("#### 💡 Banking for Every Village, with Trust and Technology")
@@ -246,11 +244,10 @@ def login_section():
                 bank.register(name, password)
                 st.success("✅ Registration successful! Please login now.")
 
-# User dashboard
 def dashboard():
     st.sidebar.markdown(f"### 👤 {st.session_state.user.capitalize()}")
     st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
-    menu = st.sidebar.radio("📋 Menu", ["🏦 Overview", "➕ Deposit", "➖ Withdraw", "🔁 Transfer", "📜 History", "🚪 Logout"])
+    menu = st.sidebar.radio("📋 Menu", ["🏦 Overview", "➕ Deposit", "➖ Withdraw", "🔁 Transfer", "📜 History", "📈 Analytics", "🚪 Logout"])
 
     st.title("💳 Account Dashboard")
     st.balloons()
@@ -296,17 +293,40 @@ def dashboard():
         else:
             st.write("No transactions yet.")
 
+    elif menu == "📈 Analytics":
+        st.subheader("📊 Spending & Earning Insights")
+        history = bank.get_history(st.session_state.user)
+        if not history:
+            st.info("No transactions yet.")
+        else:
+            txn_counts = {"Deposit": 0, "Withdraw": 0, "Transfer": 0}
+            for line in history:
+                for key in txn_counts:
+                    if key.lower() in line.lower():
+                        txn_counts[key] += 1
+            df = pd.DataFrame({
+                "Transaction Type": list(txn_counts.keys()),
+                "Count": list(txn_counts.values())
+            })
+            fig = px.bar(
+                df, x="Transaction Type", y="Count",
+                title="Transaction Summary",
+                color="Transaction Type",
+                color_discrete_sequence=px.colors.qualitative.Set2
+            )
+            st.plotly_chart(fig)
+
     elif menu == "🚪 Logout":
         st.session_state.user = None
         st.success("✅ Logged out.")
         time.sleep(1)
         st.experimental_rerun()
 
-# Render view
 if st.session_state.user:
     dashboard()
 else:
     login_section()
+
 
 
 
