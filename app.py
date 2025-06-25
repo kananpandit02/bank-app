@@ -4,69 +4,108 @@ from PIL import Image
 import time
 import plotly.express as px
 import pandas as pd
+from datetime import datetime
 
 st.set_page_config(page_title="Golar Gramin Bank", layout="centered", page_icon="🏦")
 bank = BankSystem()
 
-# Session state init
 if "user" not in st.session_state:
     st.session_state.user = None
-if "just_logged_in" not in st.session_state:
-    st.session_state.just_logged_in = False
 
-# UI Styling
-st.markdown("""
-    <style>
-        body {
-            background: linear-gradient(to right, #dbe6f6, #c5796d);
-        }
-        .main-title {
-            text-align: center;
-            font-size: 44px;
-            font-weight: bold;
-            color: #003566;
-            animation: fadeIn 1s ease-in-out;
-        }
-        .stButton > button {
-            border-radius: 12px;
-            font-size: 16px;
-            background: linear-gradient(to right, #2c3e50, #3498db);
-            color: white;
-            padding: 0.6em 1.4em;
-            border: none;
-            transition: 0.3s ease;
-        }
-        .stButton > button:hover {
-            background: linear-gradient(to right, #3498db, #2c3e50);
-        }
-        .stRadio > div {
-            flex-direction: row !important;
-            justify-content: center;
-        }
-        .custom-footer {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background-color: #f0f0f0;
-            text-align: center;
-            padding: 10px;
-            font-size: 14px;
-            color: #444;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
-    <div class="custom-footer">
-        🏦 <strong>Golar Gramin Bank</strong> | 💻 Developed by <strong>Kanan Pandit</strong> | 🔐 Secure Banking Portal
-    </div>
+now = datetime.now().strftime("%A %d %B %Y   %H:%M:%S")
+
+# --- Custom Styling & Header ---
+st.markdown(f"""
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+    .header-bar {{
+        background-color: #880E4F;
+        color: white;
+        padding: 8px 16px;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }}
+    .header-bar a {{
+        color: white;
+        margin: 0 10px;
+        text-decoration: none;
+    }}
+    .quote-banner {{
+        background-color: #fdd835;
+        color: #003566;
+        font-weight: 500;
+        font-size: 20px;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin-top: 10px;
+    }}
+    .brand-header {{
+        background-color: white;
+        padding: 20px;
+        text-align: center;
+    }}
+    .brand-header img {{
+        width: 80px;
+        margin-bottom: 10px;
+    }}
+    .brand-header h1 {{
+        color: #003566;
+        font-size: 28px;
+        margin-bottom: 4px;
+    }}
+    .brand-header p {{
+        color: #444;
+        margin: 0;
+    }}
+    .custom-footer {{
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background-color: #f0f0f0;
+        text-align: center;
+        padding: 10px;
+        font-size: 14px;
+        color: #444;
+    }}
+    .stButton > button {{
+        border-radius: 12px;
+        font-size: 16px;
+        background: linear-gradient(to right, #2c3e50, #3498db);
+        color: white;
+        padding: 0.6em 1.4em;
+        border: none;
+    }}
+</style>
+
+<div class="header-bar">
+  <div>📅 {now}</div>
+  <div>
+    <a href="#">Notice</a>
+    <a href="#">Tenders</a>
+    <a href="#">FAQ</a>
+    <a href="#">Deposit Rates</a>
+    <a href="#">Netbanking</a>
+  </div>
+</div>
+
+<div class="brand-header">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Indian_Rupee_symbol.svg/768px-Indian_Rupee_symbol.svg.png" />
+    <h1>Golar Gramin Bank</h1>
+    <p>💼 A Rural Development Banking Initiative | Sponsored by PNB</p>
+</div>
+
+<div class="quote-banner">
+    “The ultimate goal of banking is not just saving money, but empowering lives and communities.”
+</div>
 """, unsafe_allow_html=True)
 
-# --- LOGIN / REGISTER ---
+# --- Login / Register View ---
 def login_section():
-    st.markdown("<h1 class='main-title'>🔐 Welcome to Golar Gramin Bank</h1>", unsafe_allow_html=True)
-    st.markdown("#### 💡 Banking for Every Village, with Trust and Technology")
+    st.markdown("#### 💡 Login or Register Below")
     choice = st.radio("Choose:", ["Login", "Register"], horizontal=True)
     st.write("---")
 
@@ -87,8 +126,9 @@ def login_section():
         if choice == "Login":
             if bank.login(name, password):
                 st.session_state.user = name
-                st.session_state.just_logged_in = True
-                st.experimental_rerun()
+                st.success(f"✅ Welcome back, {name.capitalize()}!")
+                time.sleep(1)
+                st.rerun()
             else:
                 st.error("❌ Invalid credentials.")
         else:
@@ -98,22 +138,17 @@ def login_section():
                 bank.register(name, password)
                 st.success("✅ Registration successful! Please login now.")
 
-# --- DASHBOARD ---
+# --- Dashboard View ---
 def dashboard():
     st.sidebar.markdown(f"### 👤 {st.session_state.user.capitalize()}")
     st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
-    menu = st.sidebar.radio("📋 Menu", ["🏦 Overview", "➕ Deposit", "➖ Withdraw", "🔁 Transfer", "📜 History", "📈 Analytics", "🚪 Logout"])
+    menu = st.sidebar.radio("📋 Menu", ["🏦 Dashboard", "➕ Deposit", "➖ Withdraw", "🔁 Transfer", "📜 History", "📈 Analytics", "🚪 Logout"])
 
-    if st.session_state.just_logged_in:
-        st.success(f"✅ Welcome back, {st.session_state.user.capitalize()}!")
-        st.session_state.just_logged_in = False
-        time.sleep(1)
-
-    st.title("💳 Account Dashboard")
-    st.balloons()
-
-    balance = bank.get_balance(st.session_state.user)
-    st.metric("Available Balance", f"₹{balance}")
+    if menu == "🏦 Dashboard":
+        st.title("💳 Account Overview")
+        balance = bank.get_balance(st.session_state.user)
+        st.metric("Available Balance", f"₹{balance}")
+        st.balloons()
 
     if menu == "➕ Deposit":
         st.subheader("➕ Deposit Money")
@@ -122,7 +157,7 @@ def dashboard():
             bank.deposit(st.session_state.user, amount)
             st.success(f"✅ ₹{amount} deposited successfully!")
 
-    elif menu == "➖ Withdraw":
+    if menu == "➖ Withdraw":
         st.subheader("➖ Withdraw Money")
         amount = st.number_input("Enter amount", min_value=1)
         if st.button("Withdraw"):
@@ -131,7 +166,7 @@ def dashboard():
             else:
                 st.error("❌ Not enough balance.")
 
-    elif menu == "🔁 Transfer":
+    if menu == "🔁 Transfer":
         st.subheader("🔁 Transfer Funds")
         recipient = st.text_input("👤 Recipient Name")
         amount = st.number_input("Enter amount", min_value=1)
@@ -144,7 +179,7 @@ def dashboard():
                 else:
                     st.error("❌ Transfer failed. Check balance or username.")
 
-    elif menu == "📜 History":
+    if menu == "📜 History":
         st.subheader("📜 Transaction History")
         history = bank.get_history(st.session_state.user)
         if history:
@@ -153,8 +188,8 @@ def dashboard():
         else:
             st.write("No transactions yet.")
 
-    elif menu == "📈 Analytics":
-        st.subheader("📊 Spending & Earning Insights")
+    if menu == "📈 Analytics":
+        st.subheader("📊 Transaction Summary")
         history = bank.get_history(st.session_state.user)
         if not history:
             st.info("No transactions yet.")
@@ -168,24 +203,20 @@ def dashboard():
                 "Transaction Type": list(txn_counts.keys()),
                 "Count": list(txn_counts.values())
             })
-            fig = px.bar(
-                df, x="Transaction Type", y="Count",
-                title="Transaction Summary",
-                color="Transaction Type",
-                color_discrete_sequence=px.colors.qualitative.Set2
-            )
+            fig = px.bar(df, x="Transaction Type", y="Count",
+                         title="Transaction Distribution",
+                         color="Transaction Type",
+                         color_discrete_sequence=px.colors.qualitative.Set2)
             st.plotly_chart(fig)
 
-    elif menu == "🚪 Logout":
+    if menu == "🚪 Logout":
         st.session_state.user = None
-        st.session_state.just_logged_in = False
         st.success("✅ Logged out.")
         time.sleep(1)
-        st.experimental_rerun()
+        st.rerun()
 
-# --- MAIN ---
+# Render based on login status
 if st.session_state.user:
     dashboard()
 else:
     login_section()
-
