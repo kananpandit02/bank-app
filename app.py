@@ -17,6 +17,16 @@ if "acc_no" not in st.session_state:
 now = datetime.now().strftime("%A, %d %B %Y | %I:%M:%S %p")
 
 # --- Custom Styling & Header ---
+nav_links = """
+<a href="#">Home</a>
+<a href="#">Schemes</a>
+<a href="#">Deposits</a>
+<a href="#">Netbanking</a>
+<a href="#">FAQ</a>
+"""
+if st.session_state.user:
+    nav_links += '<a href="#dashboard">Dashboard</a>'
+
 st.markdown(f"""
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -33,6 +43,9 @@ st.markdown(f"""
         color: white;
         text-decoration: none;
         margin: 0 10px;
+    }}
+    .nav-links a:hover {{
+        color: #ffd60a;
     }}
     .quote-banner {{
         background-color: #ffd60a;
@@ -61,12 +74,7 @@ st.markdown(f"""
 <div class="nav-bar">
   <div><strong>🌐 Golar Gramin Bank</strong></div>
   <div class="nav-links">
-    <a href="#">Home</a>
-    <a href="#">Schemes</a>
-    <a href="#">Deposits</a>
-    <a href="#">Netbanking</a>
-    <a href="#">FAQ</a>
-    {'<a href="#dashboard">Dashboard</a>' if st.session_state.user else ''}
+    {nav_links}
   </div>
   <div>🕒 {now}</div>
 </div>
@@ -87,11 +95,14 @@ def login_section():
         password = st.text_input("🔑 Password", type="password")
 
         if st.button("Register"):
-            success, msg = bank.register(acc_no, name, password)
-            if success:
-                st.success(msg)
+            if len(acc_no) != 10 or not acc_no.isdigit():
+                st.error("Account number must be 10 digits.")
             else:
-                st.error(msg)
+                success, msg = bank.register(acc_no, name, password)
+                if success:
+                    st.success(msg)
+                else:
+                    st.error(msg)
 
     else:
         identifier = st.text_input("📄 Account No / Username")
@@ -188,9 +199,10 @@ if st.session_state.user:
 else:
     login_section()
 
+# --- Footer ---
 st.markdown("""
 <div class="footer" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 14px; color: #333;">
-    <strong>Developed & Maintained by <span style="color:#003566;">Kanan Pandit</span></strong> — <strong>Aspiring Data Scientist</strong><br>
+    <strong>Developed & Maintained by <span style="color:#003566;">Kanan Pandit</span></strong> — <strong><span style="color:black;">Aspiring Data Scientist</span></strong><br>
     🎓 <strong>M.Sc. in Big Data Analytics</strong>, RKMVERI, Belur Math<br>
     📧 <strong><a href="mailto:kananpandit02@gmail.com" target="_blank">kananpandit02@gmail.com</a></strong> |
     💼 <strong><a href="https://linkedin.com/in/kananpandit02" target="_blank">LinkedIn</a></strong> |
@@ -200,4 +212,3 @@ st.markdown("""
     <em><strong>"Empowering Digital Banking through Data & Design"</strong></em>
 </div>
 """, unsafe_allow_html=True)
-
