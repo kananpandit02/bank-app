@@ -17,7 +17,6 @@ now = datetime.now().strftime("%A %d %B %Y   %H:%M:%S")
 # --- Custom Styling & Header ---
 st.markdown(f"""
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
     .header-bar {{
         background-color: #880E4F;
@@ -70,7 +69,6 @@ st.markdown(f"""
         padding: 10px;
         font-size: 14px;
         color: #444;
-        border-top: 1px solid #ccc;
     }}
     .stButton > button {{
         border-radius: 12px;
@@ -80,10 +78,27 @@ st.markdown(f"""
         padding: 0.6em 1.4em;
         border: none;
     }}
+    .fixed-dashboard-btn {{
+        position: fixed;
+        top: 80px;
+        left: 10px;
+        background: #0072ff;
+        color: white;
+        padding: 10px 16px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        box-shadow: 0px 4px 12px rgba(0,0,0,0.3);
+        z-index: 9999;
+        transition: all 0.3s ease-in-out;
+    }}
+    .fixed-dashboard-btn:hover {{
+        background: #005bb5;
+        cursor: pointer;
+    }}
 </style>
-
 <div class="header-bar">
-  <div>📅 {now}</div>
+  <div>🗕️ {now}</div>
   <div>
     <a href="#">Notice</a>
     <a href="#">Tenders</a>
@@ -92,20 +107,15 @@ st.markdown(f"""
     <a href="#">Netbanking</a>
   </div>
 </div>
-
 <div class="brand-header">
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Indian_Rupee_symbol.svg/768px-Indian_Rupee_symbol.svg.png" />
     <h1>Golar Gramin Bank</h1>
     <p>💼 A Rural Development Banking Initiative | Sponsored by PNB</p>
 </div>
-
 <div class="quote-banner">
     “The ultimate goal of banking is not just saving money, but empowering lives and communities.”
 </div>
-
-<div class="custom-footer">
-    🛠️ Developed by <strong>Kanan Pandit</strong> — For Software Testing Purposes Only
-</div>
+<a href="#dashboard" class="fixed-dashboard-btn">🏠 Dashboard</a>
 """, unsafe_allow_html=True)
 
 # --- Login / Register View ---
@@ -125,7 +135,7 @@ def login_section():
         try:
             password = int(password)
         except ValueError:
-            st.error("🚫 Password must be numeric.")
+            st.error("🛑 Password must be numeric.")
             return
 
         if choice == "Login":
@@ -150,6 +160,7 @@ def dashboard():
     menu = st.sidebar.radio("📋 Menu", ["🏦 Dashboard", "➕ Deposit", "➖ Withdraw", "🔁 Transfer", "📜 History", "📈 Analytics", "🚪 Logout"])
 
     if menu == "🏦 Dashboard":
+        st.markdown('<div id="dashboard"></div>', unsafe_allow_html=True)
         st.title("💳 Account Overview")
         balance = bank.get_balance(st.session_state.user)
         st.metric("Available Balance", f"₹{balance}")
@@ -194,7 +205,7 @@ def dashboard():
             st.write("No transactions yet.")
 
     if menu == "📈 Analytics":
-        st.subheader("📊 Transaction Summary")
+        st.subheader("📈 Transaction Summary")
         history = bank.get_history(st.session_state.user)
         if not history:
             st.info("No transactions yet.")
@@ -225,3 +236,10 @@ if st.session_state.user:
     dashboard()
 else:
     login_section()
+
+# Footer with credit
+st.markdown("""
+<div class="custom-footer">
+    ✨ Developed by <strong>Kanan Pandit</strong> | For software testing & educational purposes only.
+</div>
+""", unsafe_allow_html=True)
