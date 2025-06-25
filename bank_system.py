@@ -155,7 +155,6 @@
 
 
 
-
 import json
 import os
 from datetime import datetime
@@ -176,27 +175,28 @@ class BankSystem:
             json.dump(self.users, f, indent=4)
 
     def register(self, account_no, name, password, mobile):
+        name = name.upper()
         if not account_no.isdigit() or len(account_no) != 10:
-            return False, "❌ Account number must be 10 digits."
-        if not password.isdigit() or len(password) != 6:
-            return False, "❌ Password must be 6 digits."
+            return False, "Account number must be 10 digits."
+        if len(password) != 6 or not password.isdigit():
+            return False, "Password must be 6 digits."
         if account_no in self.users:
-            return False, "❌ Account already registered."
+            return False, "Account number already registered."
         for user in self.users.values():
-            if user["name"] == name.upper():
-                return False, "❌ Username already exists."
+            if user["name"] == name:
+                return False, "Username already exists."
             if user["mobile"] == mobile:
-                return False, "❌ Mobile number already registered."
+                return False, "Mobile number already registered."
 
         self.users[account_no] = {
-            "name": name.upper(),
+            "name": name,
             "password": password,
             "mobile": mobile,
             "balance": 0,
             "history": []
         }
         self.save()
-        return True, "✅ Registration successful!"
+        return True, "Registration successful!"
 
     def login(self, identifier, password):
         for acc_no, user in self.users.items():
@@ -205,19 +205,19 @@ class BankSystem:
         return None
 
     def get_balance(self, acc_no):
-        return self.users.get(acc_no, {}).get("balance", 0)
+        return self.users[acc_no]["balance"]
 
     def deposit(self, acc_no, amount):
         self.users[acc_no]["balance"] += amount
         self.users[acc_no]["history"].append(
-            f"{datetime.now()} - Deposited ₹{amount}")
+            f"{self.current_time()} - Deposited ₹{amount}")
         self.save()
 
     def withdraw(self, acc_no, amount):
         if self.users[acc_no]["balance"] >= amount:
             self.users[acc_no]["balance"] -= amount
             self.users[acc_no]["history"].append(
-                f"{datetime.now()} - Withdrew ₹{amount}")
+                f"{self.current_time()} - Withdrew ₹{amount}")
             self.save()
             return True
         return False
@@ -233,21 +233,24 @@ class BankSystem:
             self.users[sender_acc]["balance"] -= amount
             self.users[recipient_acc]["balance"] += amount
             self.users[sender_acc]["history"].append(
-                f"{datetime.now()} - Transferred ₹{amount} to {self.users[recipient_acc]['name']}")
+                f"{self.current_time()} - Transferred ₹{amount} to {self.users[recipient_acc]['name']}")
             self.users[recipient_acc]["history"].append(
-                f"{datetime.now()} - Received ₹{amount} from {self.users[sender_acc]['name']}")
+                f"{self.current_time()} - Received ₹{amount} from {self.users[sender_acc]['name']}")
             self.save()
             return True
         return False
 
     def get_history(self, acc_no):
-        return self.users.get(acc_no, {}).get("history", [])
+        return self.users[acc_no]["history"]
 
-    def user_exists(self, name):
-        return any(user["name"] == name.upper() for user in self.users.values())
+    def recover_password(self, identifier):
+        for acc_no, user in self.users.items():
+            if user["name"] == identifier.upper() or user["mobile"] == identifier:
+                return f"Your password is: {user['password']}"
+        return "No user found with that name or mobile number."
 
-    def get_password_by_mobile_or_name(self, identifier):
-        for user in self.users.values():
-            if user["mobile"] == identifier or user["name"] == identifier.upper():
-                return user["password"]
-        return None
+    def current_time(self):
+        return datetime.now().strftime("%A, %d %B %Y | %I:%M:%S %p")
+
+    def get_all_users(self):
+        return self.users
