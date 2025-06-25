@@ -121,7 +121,7 @@ def login_section():
                 if acc:
                     st.session_state.user = bank.users[acc]["name"]
                     st.session_state.acc_no = acc
-                    st.success(f"✅ Welcome, {st.session_state.user}!")
+                    st.success(f"🎉 Welcome to Golar Gramin Bank, {st.session_state.user}! Empowering your financial journey with trust and care 💰🏦")
                     time.sleep(1)
                     st.rerun()
                 else:
