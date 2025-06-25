@@ -229,7 +229,7 @@ else:
 st.markdown("""
 <div class="footer">
     Developed by <strong>Kanan Pandit</strong> | <b>Aspiring Data Scientist</b>  
-    <br>📧 kananpandit02@gmail.com | 📞 +91-XXXXXXXXXX  
+    <br>📧 kananpandit02@gmail.com | 📞 +91-7384661310  
     <br>💼 <a href="https://linkedin.com/in/kananpandit02" target="_blank">LinkedIn</a> |  
     🌐 <a href="https://kananpanditportfolio.netlify.app" target="_blank">Portfolio</a> |  
     🧠 <a href="https://github.com/kananpandit02" target="_blank">GitHub</a>
