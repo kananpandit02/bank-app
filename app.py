@@ -147,7 +147,6 @@
 # else:
 #     login_section()
 
-
 import streamlit as st
 from bank_system import BankSystem
 from PIL import Image
@@ -158,8 +157,11 @@ import pandas as pd
 st.set_page_config(page_title="Golar Gramin Bank", layout="centered", page_icon="🏦")
 bank = BankSystem()
 
+# Initialize session state
 if "user" not in st.session_state:
     st.session_state.user = None
+if "just_logged_in" not in st.session_state:
+    st.session_state.just_logged_in = False
 
 st.markdown("""
     <style>
@@ -231,10 +233,12 @@ def login_section():
 
         if choice == "Login":
             if bank.login(name, password):
-                st.session_state.user = name
-                st.success(f"✅ Welcome back, {name.capitalize()}!")
-                time.sleep(1)
-                st.experimental_rerun()
+                if not st.session_state.just_logged_in:
+                    st.session_state.user = name
+                    st.session_state.just_logged_in = True
+                    st.success(f"✅ Welcome back, {name.capitalize()}!")
+                    time.sleep(1)
+                    st.experimental_rerun()
             else:
                 st.error("❌ Invalid credentials.")
         else:
@@ -318,20 +322,13 @@ def dashboard():
 
     elif menu == "🚪 Logout":
         st.session_state.user = None
+        st.session_state.just_logged_in = False
         st.success("✅ Logged out.")
         time.sleep(1)
         st.experimental_rerun()
 
+# Entry point
 if st.session_state.user:
     dashboard()
 else:
     login_section()
-
-
-
-
-
-
-
-
-
