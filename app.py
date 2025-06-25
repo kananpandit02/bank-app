@@ -189,7 +189,15 @@ else:
     login_section()
 
 st.markdown("""
-<div class="footer">
-  Developed by <strong>Kanan Pandit</strong> | For Software Testing Purposes Only
+<div class="footer" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 14px; color: #333;">
+    <strong>Developed & Maintained by <span style="color:#003566;">Kanan Pandit</span></strong> — <strong>Aspiring Data Scientist</strong><br>
+    🎓 <strong>M.Sc. in Big Data Analytics</strong>, RKMVERI, Belur Math<br>
+    📧 <strong><a href="mailto:kananpandit02@gmail.com" target="_blank">kananpandit02@gmail.com</a></strong> |
+    💼 <strong><a href="https://linkedin.com/in/kananpandit02" target="_blank">LinkedIn</a></strong> |
+    🧠 <strong><a href="https://github.com/kananpandit02" target="_blank">GitHub</a></strong> |
+    🌐 <strong><a href="https://kananpanditportfolio.netlify.app/" target="_blank">Portfolio</a></strong>
+    <br><br>
+    <em><strong>"Empowering Digital Banking through Data & Design"</strong></em>
 </div>
 """, unsafe_allow_html=True)
+
