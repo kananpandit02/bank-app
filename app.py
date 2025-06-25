@@ -6,240 +6,187 @@ import plotly.express as px
 import pandas as pd
 from datetime import datetime
 
-st.set_page_config(page_title="Golar Gramin Bank", layout="centered", page_icon="🏦")
+st.set_page_config(page_title="Golar Gramin Bank", layout="wide", page_icon="🏦")
 bank = BankSystem()
 
 if "user" not in st.session_state:
     st.session_state.user = None
+if "acc_no" not in st.session_state:
+    st.session_state.acc_no = None
 
-now = datetime.now().strftime("%A %d %B %Y   %H:%M:%S")
+now = datetime.now().strftime("%A, %d %B %Y | %I:%M:%S %p")
 
 # --- Custom Styling & Header ---
 st.markdown(f"""
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-    .header-bar {{
-        background-color: #880E4F;
+    .nav-bar {{
+        background-color: #003566;
+        padding: 10px 20px;
         color: white;
-        padding: 8px 16px;
-        font-size: 14px;
+        font-size: 18px;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }}
-    .header-bar a {{
+    .nav-links a {{
         color: white;
-        margin: 0 10px;
         text-decoration: none;
+        margin: 0 10px;
     }}
     .quote-banner {{
-        background-color: #fdd835;
+        background-color: #ffd60a;
         color: #003566;
         font-weight: 500;
         font-size: 20px;
-        padding: 20px;
-        border-radius: 10px;
+        padding: 15px;
         text-align: center;
-        margin-top: 10px;
+        margin: 10px 0;
+        border-radius: 12px;
     }}
-    .brand-header {{
-        background-color: white;
-        padding: 20px;
-        text-align: center;
-    }}
-    .brand-header img {{
-        width: 80px;
-        margin-bottom: 10px;
-    }}
-    .brand-header h1 {{
-        color: #003566;
-        font-size: 28px;
-        margin-bottom: 4px;
-    }}
-    .brand-header p {{
-        color: #444;
-        margin: 0;
-    }}
-    .custom-footer {{
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        background-color: #f0f0f0;
-        text-align: center;
-        padding: 10px;
+    .footer {{
+        margin-top: 20px;
         font-size: 14px;
-        color: #444;
+        color: #888;
+        text-align: center;
     }}
     .stButton > button {{
-        border-radius: 12px;
+        border-radius: 10px;
         font-size: 16px;
-        background: linear-gradient(to right, #2c3e50, #3498db);
+        background-color: #003566;
         color: white;
-        padding: 0.6em 1.4em;
-        border: none;
-    }}
-    .fixed-dashboard-btn {{
-        position: fixed;
-        top: 80px;
-        left: 10px;
-        background: #0072ff;
-        color: white;
-        padding: 10px 16px;
-        font-size: 16px;
-        font-weight: bold;
-        border-radius: 8px;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.3);
-        z-index: 9999;
-        transition: all 0.3s ease-in-out;
-    }}
-    .fixed-dashboard-btn:hover {{
-        background: #005bb5;
-        cursor: pointer;
+        padding: 8px 16px;
     }}
 </style>
-<div class="header-bar">
-  <div>🗕️ {now}</div>
-  <div>
-    <a href="#">Notice</a>
-    <a href="#">Tenders</a>
-    <a href="#">FAQ</a>
-    <a href="#">Deposit Rates</a>
+<div class="nav-bar">
+  <div><strong>🌐 Golar Gramin Bank</strong></div>
+  <div class="nav-links">
+    <a href="#">Home</a>
+    <a href="#">Schemes</a>
+    <a href="#">Deposits</a>
     <a href="#">Netbanking</a>
+    <a href="#">FAQ</a>
   </div>
-</div>
-<div class="brand-header">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Indian_Rupee_symbol.svg/768px-Indian_Rupee_symbol.svg.png" />
-    <h1>Golar Gramin Bank</h1>
-    <p>💼 A Rural Development Banking Initiative | Sponsored by PNB</p>
+  <div>🕒 {now}</div>
 </div>
 <div class="quote-banner">
-    “The ultimate goal of banking is not just saving money, but empowering lives and communities.”
+    "The ultimate goal of banking is not just saving money, but empowering lives and communities."
 </div>
-<a href="#dashboard" class="fixed-dashboard-btn">🏠 Dashboard</a>
 """, unsafe_allow_html=True)
 
-# --- Login / Register View ---
+# --- Login/Register Section ---
 def login_section():
-    st.markdown("#### 💡 Login or Register Below")
-    choice = st.radio("Choose:", ["Login", "Register"], horizontal=True)
+    st.markdown("#### 💡 Login or Register")
+    choice = st.radio("Select Option", ["Login", "Register"], horizontal=True)
     st.write("---")
 
-    name = st.text_input("👤 Username")
-    password = st.text_input("🔑 Password", type="password")
+    if choice == "Register":
+        acc_no = st.text_input("🌐 Account Number (10 digits)")
+        name = st.text_input("👤 Full Name")
+        password = st.text_input("🔑 Password", type="password")
 
-    if st.button("Submit"):
-        if not name or not password:
-            st.warning("⚠️ Please enter both username and password.")
-            return
+        if st.button("Register"):
+            success, msg = bank.register(acc_no, name, password)
+            if success:
+                st.success(msg)
+            else:
+                st.error(msg)
 
-        try:
-            password = int(password)
-        except ValueError:
-            st.error("🛑 Password must be numeric.")
-            return
+    else:
+        identifier = st.text_input("📄 Account No / Username")
+        password = st.text_input("🔑 Password", type="password")
 
-        if choice == "Login":
-            if bank.login(name, password):
-                st.session_state.user = name
-                st.success(f"✅ Welcome back, {name.capitalize()}!")
+        if st.button("Login"):
+            acc_no = bank.login(identifier, password)
+            if acc_no:
+                st.session_state.user = bank.users[acc_no]["name"]
+                st.session_state.acc_no = acc_no
+                st.success(f"✅ Welcome {st.session_state.user}!")
                 time.sleep(1)
                 st.rerun()
             else:
-                st.error("❌ Invalid credentials.")
-        else:
-            if bank.user_exists(name):
-                st.warning("⚠️ User already exists. Try logging in.")
-            else:
-                bank.register(name, password)
-                st.success("✅ Registration successful! Please login now.")
+                st.error("❌ Invalid credentials")
 
-# --- Dashboard View ---
+# --- Dashboard ---
 def dashboard():
-    st.sidebar.markdown(f"### 👤 {st.session_state.user.capitalize()}")
-    st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
-    menu = st.sidebar.radio("📋 Menu", ["🏦 Dashboard", "➕ Deposit", "➖ Withdraw", "🔁 Transfer", "📜 History", "📈 Analytics", "🚪 Logout"])
+    st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=80)
+    st.sidebar.markdown(f"### 👤 {st.session_state.user}")
+    menu = st.sidebar.radio("Menu", ["Dashboard", "Deposit", "Withdraw", "Transfer", "History", "Analytics", "Logout"])
 
-    if menu == "🏦 Dashboard":
-        st.markdown('<div id="dashboard"></div>', unsafe_allow_html=True)
-        st.title("💳 Account Overview")
-        balance = bank.get_balance(st.session_state.user)
+    acc_no = st.session_state.acc_no
+
+    if menu == "Dashboard":
+        st.title("💼 Account Dashboard")
+        balance = bank.get_balance(acc_no)
         st.metric("Available Balance", f"₹{balance}")
-        st.balloons()
 
-    if menu == "➕ Deposit":
-        st.subheader("➕ Deposit Money")
-        amount = st.number_input("Enter amount", min_value=1)
+    elif menu == "Deposit":
+        st.subheader("Deposit Money")
+        amt = st.number_input("Enter amount", min_value=1)
         if st.button("Deposit"):
-            bank.deposit(st.session_state.user, amount)
-            st.success(f"✅ ₹{amount} deposited successfully!")
+            bank.deposit(acc_no, amt)
+            st.success(f"✅ Deposited ₹{amt}")
 
-    if menu == "➖ Withdraw":
-        st.subheader("➖ Withdraw Money")
-        amount = st.number_input("Enter amount", min_value=1)
+    elif menu == "Withdraw":
+        st.subheader("Withdraw Money")
+        amt = st.number_input("Enter amount", min_value=1)
         if st.button("Withdraw"):
-            if bank.withdraw(st.session_state.user, amount):
-                st.success(f"✅ ₹{amount} withdrawn successfully!")
+            if bank.withdraw(acc_no, amt):
+                st.success(f"✅ Withdrew ₹{amt}")
             else:
-                st.error("❌ Not enough balance.")
+                st.error("❌ Insufficient balance")
 
-    if menu == "🔁 Transfer":
-        st.subheader("🔁 Transfer Funds")
-        recipient = st.text_input("👤 Recipient Name")
-        amount = st.number_input("Enter amount", min_value=1)
+    elif menu == "Transfer":
+        st.subheader("Transfer Money")
+        recipient = st.text_input("Recipient Username")
+        amt = st.number_input("Enter amount", min_value=1)
         if st.button("Transfer"):
             if recipient == st.session_state.user:
-                st.warning("⚠️ You cannot transfer to yourself.")
+                st.warning("You cannot transfer to yourself")
+            elif bank.transfer(acc_no, recipient, amt):
+                st.success(f"✅ Transferred ₹{amt} to {recipient}")
             else:
-                if bank.transfer(st.session_state.user, recipient, amount):
-                    st.success(f"✅ ₹{amount} sent to {recipient}")
-                else:
-                    st.error("❌ Transfer failed. Check balance or username.")
+                st.error("Transfer failed")
 
-    if menu == "📜 History":
-        st.subheader("📜 Transaction History")
-        history = bank.get_history(st.session_state.user)
+    elif menu == "History":
+        st.subheader("Transaction History")
+        history = bank.get_history(acc_no)
         if history:
-            for txn in reversed(history[-10:]):
-                st.info(txn)
+            for h in reversed(history[-10:]):
+                st.info(h)
         else:
-            st.write("No transactions yet.")
+            st.write("No transaction history yet")
 
-    if menu == "📈 Analytics":
-        st.subheader("📈 Transaction Summary")
-        history = bank.get_history(st.session_state.user)
+    elif menu == "Analytics":
+        st.subheader("Transaction Analytics")
+        history = bank.get_history(acc_no)
         if not history:
-            st.info("No transactions yet.")
+            st.info("No data")
         else:
-            txn_counts = {"Deposit": 0, "Withdraw": 0, "Transfer": 0}
-            for line in history:
-                for key in txn_counts:
-                    if key.lower() in line.lower():
-                        txn_counts[key] += 1
-            df = pd.DataFrame({
-                "Transaction Type": list(txn_counts.keys()),
-                "Count": list(txn_counts.values())
-            })
-            fig = px.bar(df, x="Transaction Type", y="Count",
-                         title="Transaction Distribution",
-                         color="Transaction Type",
-                         color_discrete_sequence=px.colors.qualitative.Set2)
+            txn_type = {"Deposit": 0, "Withdraw": 0, "Transfer": 0}
+            for h in history:
+                for key in txn_type:
+                    if key.lower() in h.lower():
+                        txn_type[key] += 1
+            df = pd.DataFrame({"Transaction": txn_type.keys(), "Count": txn_type.values()})
+            fig = px.pie(df, names="Transaction", values="Count", title="Your Transactions")
             st.plotly_chart(fig)
 
-    if menu == "🚪 Logout":
+    elif menu == "Logout":
         st.session_state.user = None
-        st.success("✅ Logged out.")
+        st.session_state.acc_no = None
+        st.success("Logged out")
         time.sleep(1)
         st.rerun()
 
-# Render based on login status
+# --- Main Flow ---
 if st.session_state.user:
     dashboard()
 else:
     login_section()
 
-# Footer with credit
 st.markdown("""
-<div class="custom-footer">
-    ✨ Developed by <strong>Kanan Pandit</strong> | For software testing & educational purposes only.
+<div class="footer">
+  Developed by <strong>Kanan Pandit</strong> | For Software Testing Purposes Only
 </div>
 """, unsafe_allow_html=True)
